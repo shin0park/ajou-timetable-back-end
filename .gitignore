@@ -1,0 +1,4 @@
+node_modules/
+.env
+db_config/db.js
+routes/jaejin.js

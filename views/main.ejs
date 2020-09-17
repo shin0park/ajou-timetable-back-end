@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css">
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+</head>
+
+<body>
+<div id="app" class="container">
+    <div class="row">
+        <h1>AJOU TT</h1>
+        <div v-if="!user">
+            <router-link to="/login">Go to login</router-link>
+        </div>
+        <div v-if="user" class="form-group">
+            <button type="button" class="btn btn-default" onclick="toLogout()">Logout</button>
+        </div>
+        <template>
+            <div>
+                <router-view></router-view>
+            </div>
+        </template>
+    </div>
+</div>
+</body>
+<script>
+    const toLogout = function () {
+        axios.get('/user/logout').then(res => {
+            if (res.data === "successLogout") {
+                alert("로그아웃.");
+                router.push('/');
+                return window.location.reload();
+            }
+
+        }).catch(err => alert('invalid logout'));
+    };
+</script>
+<script>
+    const NotFoundComponent = {template: '<p>Page not found</p>'}
+    const Home = {template: '<div>Welcome</div>'}
+    const Login = {
+        template: `
+                    <div class="col-md-4 col-md-offset-4">
+                        <form>
+                            <div class="form-group">
+                                <label for="sNumber">Username:</label>
+                                <input v-model="sNumber" type="sNumber" class="form-control" id="sNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input v-model="password" type="password" class="form-control" id="password">
+                            </div>
+                            <div>
+                                <button v-on:click="login(sNumber, password)" type="button" class="btn btn-default">Login</button>
+                                <button v-on:click="toJoin()" type="button" class="btn btn-default">Join</button>
+                            </div>
+                        </form>
+                    </div>
+            `,
+        methods: {
+            login: function (sNumber, password) {
+                axios.post('/user/login', {sNumber: sNumber, password: password}).then(res => {
+                    if (res.data === "loginError") {
+                        this.sNumber = "";
+                        this.password = "";
+                        return alert("아이디 및 비밀번호가 일치하지 않습니다.");
+                    } else {
+                        alert("로그인 되었습니다.");
+                        router.push('/');
+                    }
+                    return window.location.reload();
+                }).catch(err => {
+                    alert("Invalid creds");
+                });
+            },
+            toJoin: function () {
+                router.push('/join');//회원가입으로
+            },
+        },
+        data: function () {
+            return {
+                sNumber: "",
+                password: "",
+            }
+        }
+    }
+    const Join = {
+        template: `
+                    <div class="col-md-4 col-md-offset-4">
+                        <form>
+                            <div class="form-group">
+                                <label for="sNumber">Username:</label>
+                                <input v-model="sNumber" type="sNumber" class="form-control" id="sNumber">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input v-model="password" type="password" class="form-control" id="password">
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <input v-model="name" type="text" class="form-control" id="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="dName">Dname:</label>
+                                <input v-model="dName" type="text" class="form-control" id="dName">
+                            </div>
+                            <div class="form-group">
+                                <label for="grade">Grade:</label>
+                                <input v-model="grade" type="text" class="form-control" id="grade">
+                            </div>
+                            <div class="form-group">
+                                <label for="nickname">Nickname:</label>
+                                <input v-model="nickname" type="text" class="form-control" id="nickname">
+                            </div>
+                            <button v-on:click="join(sNumber, password, name , dName, grade, nickname)" type="button" class="btn btn-default">Join</button>
+                        </form>
+                    </div>
+            `,
+        methods: {
+            join: function (sNumber, password, name, dName, grade, nickname) {
+                axios.post('/user/register', {
+                    sNumber: sNumber,
+                    password: password,
+                    name: name,
+                    dName: dName,
+                    grade: grade,
+                    nickname: nickname
+                }).then(res => {
+                    if (res.data == "alreadyRegister") {
+                        this.sNumber = "";
+                        this.password = "";
+                        this.name = "";
+                        this.dName = "";
+                        this.grade = "";
+                        this.nickname = "";
+                        return alert("이미 가입된 이메일입니다.");
+                    } else {
+                        alert("가입이 완료되었습니다.");
+                        return router.push('/login');//회원가입 완료후 로그인페이지로
+                    }
+                }).catch(err => {
+                    alert("Invalid creds");
+                });
+            }
+        },
+        data: function () {
+            return {
+                sNumber: "",
+                password: "",
+                name: "",
+                dName: "",
+                grade: "",
+                nickname: ""
+            }
+        }
+    }
+    const routes = [
+        {path: '/', component: Home},
+        {path: '/join', component: Join},
+        {path: '/login', component: Login},
+        {path: '*', component: NotFoundComponent}
+    ];
+    const router = new VueRouter({
+        routes
+    });
+
+    const app = new Vue({
+        router,
+        data: function () {
+            return {
+                user: "<%= user %>" //현재 로그인된 사용자
+            }
+        }
+    }).$mount('#app');
+</script>
+
+</html>
